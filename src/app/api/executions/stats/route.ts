@@ -2,17 +2,23 @@ import { NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
 import type { ExecutionLog } from "@/lib/types";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET() {
   try {
     const supabase = getSupabase();
 
-    const { data, error } = await supabase
+    const { data, error, count } = await supabase
       .from("n8n_execution_logs")
-      .select("status, duration_ms");
+      .select("status, duration_ms", { count: "exact" });
 
     if (error) {
+      console.error("Stats API error:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    console.log("Stats API - rows returned:", data?.length, "count:", count);
 
     const executions = (data || []) as Pick<ExecutionLog, "status" | "duration_ms">[];
 
