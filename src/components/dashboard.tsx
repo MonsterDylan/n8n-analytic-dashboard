@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
@@ -13,7 +14,8 @@ import { ExecutionChart } from "./execution-chart";
 import { StatusDistributionChart } from "./status-distribution-chart";
 import { ExecutionTable } from "./execution-table";
 import { ThemeToggle } from "./theme-toggle";
-import type { ExecutionLog, ExecutionStats, DailyStats } from "@/lib/types";
+import { WorkflowEditorPanel } from "./workflow-editor-panel";
+import type { ExecutionLog, ExecutionStats, DailyStats, SelectedWorkflow } from "@/lib/types";
 
 function formatDuration(ms: number): string {
   if (ms < 1000) return `${Math.round(ms)}ms`;
@@ -29,6 +31,8 @@ async function fetchJson<T>(url: string): Promise<T> {
 
 export function Dashboard() {
   const queryClient = useQueryClient();
+  const [selectedWorkflow, setSelectedWorkflow] = useState<SelectedWorkflow | null>(null);
+  const n8nUrl = process.env.NEXT_PUBLIC_N8N_URL || "https://djwconsulting.app.n8n.cloud";
 
   const {
     data: executions,
@@ -143,8 +147,18 @@ export function Dashboard() {
         <ExecutionTable
           data={executions || []}
           isLoading={executionsLoading}
+          onEditWorkflow={setSelectedWorkflow}
         />
       </div>
+
+      {/* Workflow Editor Panel */}
+      {selectedWorkflow && (
+        <WorkflowEditorPanel
+          selectedWorkflow={selectedWorkflow}
+          onClose={() => setSelectedWorkflow(null)}
+          n8nUrl={n8nUrl}
+        />
+      )}
     </div>
   );
 }

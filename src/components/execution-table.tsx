@@ -5,8 +5,8 @@ import { AgGridReact } from "ag-grid-react";
 import { ColDef, themeQuartz } from "ag-grid-community";
 import { useTheme } from "next-themes";
 import { format } from "date-fns";
-import { ExternalLink } from "lucide-react";
-import type { ExecutionLog } from "@/lib/types";
+import { ExternalLink, Pencil } from "lucide-react";
+import type { ExecutionLog, SelectedWorkflow } from "@/lib/types";
 
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-quartz.css";
@@ -14,6 +14,7 @@ import "ag-grid-community/styles/ag-theme-quartz.css";
 interface ExecutionTableProps {
   data: ExecutionLog[];
   isLoading?: boolean;
+  onEditWorkflow?: (workflow: SelectedWorkflow) => void;
 }
 
 function formatDuration(ms: number | null): string {
@@ -41,7 +42,7 @@ function StatusBadge({ value }: { value: string }) {
   );
 }
 
-export function ExecutionTable({ data, isLoading }: ExecutionTableProps) {
+export function ExecutionTable({ data, isLoading, onEditWorkflow }: ExecutionTableProps) {
   const { resolvedTheme } = useTheme();
   const n8nUrl = process.env.NEXT_PUBLIC_N8N_URL || "https://djwconsulting.app.n8n.cloud";
 
@@ -99,6 +100,28 @@ export function ExecutionTable({ data, isLoading }: ExecutionTableProps) {
         },
       },
       {
+        headerName: "Edit",
+        width: 80,
+        sortable: false,
+        filter: false,
+        resizable: false,
+        cellRenderer: (params: { data: ExecutionLog }) => {
+          if (!params.data || !onEditWorkflow) return null;
+          return (
+            <button
+              onClick={() => onEditWorkflow({
+                id: params.data.workflow_id,
+                name: params.data.workflow_name,
+              })}
+              className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted transition-colors"
+              title="Edit workflow with AI"
+            >
+              <Pencil className="w-4 h-4 text-primary" />
+            </button>
+          );
+        },
+      },
+      {
         headerName: "Workflow",
         field: "workflow_name",
         flex: 1,
@@ -151,7 +174,7 @@ export function ExecutionTable({ data, isLoading }: ExecutionTableProps) {
         cellClass: "text-red-500",
       },
     ],
-    [n8nUrl]
+    [n8nUrl, onEditWorkflow]
   );
 
   if (isLoading) {

@@ -33,3 +33,13 @@ export interface DailyStats {
   success: number;
   error: number;
 }
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface SelectedWorkflow {
+  id: string;
+  name: string;
+}
