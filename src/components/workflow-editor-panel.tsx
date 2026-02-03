@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { X, Loader2, ExternalLink, GitBranch } from "lucide-react";
 import { ChatInterface } from "./chat-interface";
-import type { ChatMessage, SelectedWorkflow } from "@/lib/types";
+import type { ChatMessage, SelectedWorkflow, ImageAttachment } from "@/lib/types";
 import type { N8nWorkflow } from "@/lib/n8n";
 
 interface WorkflowEditorPanelProps {
@@ -47,10 +47,10 @@ export function WorkflowEditorPanel({
     fetchWorkflow();
   }, [selectedWorkflow.id]);
 
-  const handleSendMessage = async (userMessage: string) => {
+  const handleSendMessage = async (userMessage: string, images?: ImageAttachment[]) => {
     if (!workflow) return;
 
-    const newUserMessage: ChatMessage = { role: "user", content: userMessage };
+    const newUserMessage: ChatMessage = { role: "user", content: userMessage, images };
     setMessages((prev) => [...prev, newUserMessage]);
     setIsLoadingChat(true);
 
@@ -62,6 +62,7 @@ export function WorkflowEditorPanel({
           workflow: modifiedWorkflow || workflow,
           messages,
           userMessage,
+          images,
         }),
       });
 
@@ -89,14 +90,20 @@ export function WorkflowEditorPanel({
   };
 
   const handleApplyChanges = async () => {
-    if (!modifiedWorkflow) return;
+    if (!modifiedWorkflow || !workflow) return;
 
     setIsApplying(true);
     try {
+      // Always include the original workflow name (required by n8n API)
+      const workflowToSave = {
+        ...modifiedWorkflow,
+        name: workflow.name,
+      };
+
       const res = await fetch(`/api/workflows/${selectedWorkflow.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(modifiedWorkflow),
+        body: JSON.stringify(workflowToSave),
       });
 
       if (!res.ok) {

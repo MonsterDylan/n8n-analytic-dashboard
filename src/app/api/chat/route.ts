@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { chatWithWorkflow, ChatMessage } from "@/lib/anthropic";
+import { chatWithWorkflow, ChatMessage, ImageAttachment } from "@/lib/anthropic";
 
 export const dynamic = "force-dynamic";
 
@@ -7,6 +7,7 @@ interface ChatRequestBody {
   workflow: Record<string, unknown>;
   messages: ChatMessage[];
   userMessage: string;
+  images?: ImageAttachment[];
 }
 
 export async function POST(request: NextRequest) {
@@ -24,7 +25,8 @@ export async function POST(request: NextRequest) {
     const result = await chatWithWorkflow(
       body.workflow,
       body.messages || [],
-      body.userMessage
+      body.userMessage,
+      body.images
     );
 
     return NextResponse.json(result);

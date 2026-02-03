@@ -34,9 +34,16 @@ export interface DailyStats {
   error: number;
 }
 
+export interface ImageAttachment {
+  type: "base64";
+  media_type: "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+  data: string; // base64 encoded (without data: prefix)
+}
+
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+  images?: ImageAttachment[]; // Optional images for user messages
 }
 
 export interface SelectedWorkflow {

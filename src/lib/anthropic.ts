@@ -46,20 +46,51 @@ When outputting a modified workflow, wrap it in these tags:
 
 Only include the workflow JSON inside the tags, no other text.`;
 
+export interface ImageAttachment {
+  type: "base64";
+  media_type: "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+  data: string;
+}
+
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+  images?: ImageAttachment[];
 }
 
 export async function chatWithWorkflow(
   workflow: Record<string, unknown>,
   messages: ChatMessage[],
-  userMessage: string
+  userMessage: string,
+  images?: ImageAttachment[]
 ): Promise<{ response: string; modifiedWorkflow?: Record<string, unknown> }> {
   const client = getAnthropicClient();
 
   // Build the conversation with workflow context
   const workflowContext = `Here is the current workflow JSON:\n\`\`\`json\n${JSON.stringify(workflow, null, 2)}\n\`\`\``;
+
+  // Helper to build message content with optional images
+  const buildMessageContent = (
+    text: string,
+    imgs?: ImageAttachment[]
+  ): string | Anthropic.ContentBlockParam[] => {
+    if (!imgs || imgs.length === 0) {
+      return text;
+    }
+    // Build content array with images first, then text
+    const content: Anthropic.ContentBlockParam[] = [
+      ...imgs.map((img) => ({
+        type: "image" as const,
+        source: {
+          type: "base64" as const,
+          media_type: img.media_type,
+          data: img.data,
+        },
+      })),
+      { type: "text" as const, text },
+    ];
+    return content;
+  };
 
   const conversationMessages: Anthropic.MessageParam[] = [
     {
@@ -72,11 +103,11 @@ export async function chatWithWorkflow(
     },
     ...messages.map((m) => ({
       role: m.role as "user" | "assistant",
-      content: m.content,
+      content: buildMessageContent(m.content, m.images),
     })),
     {
       role: "user",
-      content: userMessage,
+      content: buildMessageContent(userMessage, images),
     },
   ];
 
