@@ -14,11 +14,12 @@ export async function GET(request: NextRequest) {
     startDate.setDate(startDate.getDate() - days);
 
     // Fetch both started_at and created_at to handle NULL started_at values
+    // Use a large limit to ensure we get all executions in the date range
     const { data, error } = await supabase
       .from("n8n_execution_logs")
       .select("status, started_at, created_at")
       .gte("created_at", startDate.toISOString())
-      .order("created_at", { ascending: true });
+      .limit(10000);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
